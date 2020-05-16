@@ -27,11 +27,11 @@ AVLTree<T>::AVLTree() {
 
 template<typename T>
 void AVLTree<T>::remove(const T &value) {
-    Doremi(root, value);
+    root = Doremi(root, value);
 }
 
 template<typename T>
-bool AVLTree<T>::exists(const T &value) const{
+bool AVLTree<T>::exists(const T &value) const {
     return _exists(root, value);
 }
 
@@ -67,7 +67,7 @@ Node<T> *AVLTree<T>::Find(AVLTree t, T key) {
 */
 template<typename T>
 AVLTree<T>::~AVLTree() {
-    delete root;
+    _delete(root);
 }
 
 template<typename T>
@@ -83,7 +83,7 @@ int AVLTree<T>::_height(const Node<T> *pNode) {
 
 template<typename T>
 int AVLTree<T>::_balance(const Node<T> *pNode) {
-    return pNode ? (pNode->l ? pNode->l->h : 0) - (pNode->r ? pNode->r->h : 0) : 0;
+    return pNode ? (pNode->l ? pNode->l->h + 1 : 0) - (pNode->r ? pNode->r->h + 1 : 0) : 0;
 }
 
 template<typename T>
@@ -139,14 +139,16 @@ template<typename T>
 Node<T> *AVLTree<T>::_insert(Node<T> *pNode, const T &key) {
     if (!pNode) return new Node<T>(key);
     else if (key < pNode->data) {
+        pNode = _balancing(pNode);
         pNode->l = _insert(pNode->l, key);
         pNode = _balancing(pNode);
     } else if (key > pNode->data) {
+        pNode = _balancing(pNode);
         pNode->r = _insert(pNode->r, key);
         pNode = _balancing(pNode);
     } else {
         //Already existed
-        return NULL;
+        return pNode;
     }
     pNode->h = max(_height(pNode->l), _height(pNode->r)) + 1;
     return pNode;
@@ -193,9 +195,9 @@ Node<T> *AVLTree<T>::_find(Node<T> *pNode, const T &key) const {
 
 template<typename T>
 Node<T> *AVLTree<T>::_findelem(Node<T> *pNode, const T &key) const {
-    if(pNode == NULL) return NULL;
-    if(pNode->data > key) return _findelem(pNode->l, key);
-    if(pNode->data < key) return _findelem(pNode->r, key);
+    if (pNode == NULL) return NULL;
+    if (pNode->data > key) return _findelem(pNode->l, key);
+    if (pNode->data < key) return _findelem(pNode->r, key);
     return pNode;
 }
 
@@ -213,6 +215,7 @@ void AVLTree<T>::_remove(Node<T> *pNode, const T &key) {
     Node<T> *tmpNode = _find(pNode, key);
     if (tmpNode == NULL) {
         delete tmpNode;
+        pNode = _balancing(pNode);
         return;
     }
     //Left and right subtree
@@ -226,7 +229,7 @@ void AVLTree<T>::_remove(Node<T> *pNode, const T &key) {
         //tmpNode->data = minTmpNode->data;
         pNode = minTmpNode;
         delete tmpNode, minTmpNode;
-
+        pNode = _balancing(pNode);
         return;
     }
 
@@ -235,18 +238,21 @@ void AVLTree<T>::_remove(Node<T> *pNode, const T &key) {
         //Node* leftTmpNode = pNode->l;
         pNode = pNode->l;
         delete tmpNode;
+        pNode = _balancing(pNode);
         return;
     }
     //Only right subtree
     if (tmpNode->r && !(tmpNode->l)) {
         pNode = pNode->r;
         delete tmpNode;
+        pNode = _balancing(pNode);
         return;
     }
     //No subtrees
     if (!(tmpNode->l && tmpNode->r)) {
         pNode = NULL;
         delete tmpNode;
+        pNode = _balancing(pNode);
         return;
     }
 
